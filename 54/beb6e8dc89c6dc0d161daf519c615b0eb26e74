@@ -1,0 +1,26 @@
+.github/workflows/ci.yml
+  s_e850996142526b::t_f2f529ecdc1c7b 41,43-48,50,55
+scripts/lint.ts
+  s_e850996142526b::t_168fccf90363d7 136-140,144,151-153
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "54beb6e8dc89c6dc0d161daf519c615b0eb26e74",
+  "prompts": {},
+  "humans": {
+    "h_6b23b0021492af": {
+      "author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_e850996142526b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea58b-4814-7a80-8b22-e497f21b9000",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  }
+}

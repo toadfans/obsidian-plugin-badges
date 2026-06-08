@@ -133,18 +133,24 @@ async function checkCi(): Promise<void> {
     "bun test",
     "oven-sh/setup-bun",
     "package.json",
-    "softprops/action-gh-release@v3",
-    "tag_name: ${{ steps.version.outputs.tag }}",
+    "ncipollo/release-action@v1",
+    "commit: ${{ github.sha }}",
+    "generateReleaseNotes: true",
+    "makeLatest: true",
+    "skipIfReleaseExists: true",
     "cssnr/update-version-tags-action@v2",
     "tag: ${{ steps.version.outputs.tag }}",
     "force: true",
-    "minor: false",
+    "minor: true",
   ]) {
     if (!text.includes(needle)) {
       failures.push(`ci.yml missing ${needle}`);
     }
   }
 
+  if (/gh\s+release\s+view/.test(text)) {
+    failures.push("ci.yml must let the release action handle existing releases");
+  }
   if (/git\s+tag\s+-f|git\s+tag\s+-fa|git\s+push\s+-f/.test(text)) {
     failures.push("ci.yml must use a version tag action instead of hand-written force tag commands");
   }

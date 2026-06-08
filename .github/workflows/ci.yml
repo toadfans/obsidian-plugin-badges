@@ -37,35 +37,20 @@ jobs:
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "Version from package.json: ${VERSION}"
 
-      - name: Check if release exists
-        id: release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if gh release view "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-            echo "Release ${{ steps.version.outputs.tag }} already exists, skipping."
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Create release
-        if: steps.release.outputs.exists == 'false'
-        uses: softprops/action-gh-release@v3
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          target_commitish: ${{ github.sha }}
-          name: Release ${{ steps.version.outputs.tag }}
-          draft: false
-          prerelease: false
-          body: Release ${{ steps.version.outputs.tag }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.version.outputs.tag }}
+          commit: ${{ github.sha }}
+          name: ${{ steps.version.outputs.tag }}
+          generateReleaseNotes: true
+          makeLatest: true
+          skipIfReleaseExists: true
 
-      - name: Update major version tag
+      - name: Update version tags
         uses: cssnr/update-version-tags-action@v2
         with:
           tag: ${{ steps.version.outputs.tag }}
           major: true
-          minor: false
+          minor: true
           force: true

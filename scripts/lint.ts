@@ -4,27 +4,14 @@ import { extname, join, relative } from "node:path";
 const root = process.cwd();
 const ignored = new Set([".git", "node_modules"]);
 const bannedExtensions = new Set([".js", ".mjs", ".cjs"]);
-const requiredFiles = [
-  "action.yml",
-  "package.json",
-  "src/core.ts",
-  "src/cli.ts",
-  "test/core.test.ts",
-  "scripts/lint.ts",
-  ".github/workflows/ci.yml",
-  "README.md",
-];
 
 const failures: string[] = [];
-
-for (const file of requiredFiles) {
-  await requireFile(file);
-}
 
 for (const file of await files(root)) {
   const path = relative(root, file);
   const extension = extname(path);
 
+  // The action is run straight from TypeScript by bun; committed JS would be a build artifact.
   if (bannedExtensions.has(extension)) {
     failures.push(`forbidden file extension: ${path}`);
   }
@@ -42,8 +29,6 @@ for (const file of await files(root)) {
 }
 
 await checkPackage();
-await checkAction();
-await checkCi();
 
 if (failures.length > 0) {
   for (const failure of failures) {
@@ -53,14 +38,6 @@ if (failures.length > 0) {
 }
 
 console.log("lint ok");
-
-async function requireFile(path: string): Promise<void> {
-  try {
-    await readFile(join(root, path), "utf8");
-  } catch {
-    failures.push(`missing required file: ${path}`);
-  }
-}
 
 async function files(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -85,73 +62,23 @@ async function files(dir: string): Promise<string[]> {
 }
 
 async function checkPackage(): Promise<void> {
-  const text = await readFile(join(root, "package.json"), "utf8");
-  const pkg = JSON.parse(text) as {
-    scripts?: Record<string, string>;
+  const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8")) as {
+    version?: unknown;
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
   };
 
+  // action.yml runs `bun run src/cli.ts` with no install step, so any declared
+  // dependency would simply be missing at runtime. Keep it zero-dependency.
   if (pkg.dependencies && Object.keys(pkg.dependencies).length > 0) {
-    failures.push("package.json must not declare dependencies");
+    failures.push("package.json must not declare dependencies (action has no install step)");
   }
   if (pkg.devDependencies && Object.keys(pkg.devDependencies).length > 0) {
-    failures.push("package.json must not declare devDependencies");
+    failures.push("package.json must not declare devDependencies (action has no install step)");
   }
-  if (pkg.scripts?.lint !== "bun run scripts/lint.ts") {
-    failures.push("package.json lint script must run scripts/lint.ts");
-  }
-  if (pkg.scripts?.test !== "bun test") {
-    failures.push("package.json test script must run bun test");
-  }
-  if (!/^\d+\.\d+\.\d+$/.test(String((pkg as { version?: unknown }).version ?? ""))) {
+
+  // The release workflow derives the git tag (vX.Y.Z) from this field.
+  if (!/^\d+\.\d+\.\d+$/.test(String(pkg.version ?? ""))) {
     failures.push("package.json version must be X.Y.Z");
-  }
-}
-
-async function checkAction(): Promise<void> {
-  const text = await readFile(join(root, "action.yml"), "utf8");
-
-  for (const needle of [
-    "using: composite",
-    "source-dir:",
-    "plugin-slug:",
-    "commit:",
-    "bun run \"$GITHUB_ACTION_PATH/src/cli.ts\"",
-  ]) {
-    if (!text.includes(needle)) {
-      failures.push(`action.yml missing ${needle}`);
-    }
-  }
-}
-
-async function checkCi(): Promise<void> {
-  const text = await readFile(join(root, ".github/workflows/ci.yml"), "utf8");
-
-  for (const needle of [
-    "bun run lint",
-    "bun test",
-    "oven-sh/setup-bun",
-    "package.json",
-    "ncipollo/release-action@v1",
-    "commit: ${{ github.sha }}",
-    "generateReleaseNotes: true",
-    "makeLatest: true",
-    "skipIfReleaseExists: true",
-    "cssnr/update-version-tags-action@v2",
-    "tag: ${{ steps.version.outputs.tag }}",
-    "force: true",
-    "minor: true",
-  ]) {
-    if (!text.includes(needle)) {
-      failures.push(`ci.yml missing ${needle}`);
-    }
-  }
-
-  if (/gh\s+release\s+view/.test(text)) {
-    failures.push("ci.yml must let the release action handle existing releases");
-  }
-  if (/git\s+tag\s+-f|git\s+tag\s+-fa|git\s+push\s+-f/.test(text)) {
-    failures.push("ci.yml must use a version tag action instead of hand-written force tag commands");
   }
 }

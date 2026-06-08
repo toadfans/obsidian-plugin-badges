@@ -1,0 +1,14 @@
+.github/workflows/ci.yml
+  h_6b23b0021492af 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "239aac2aa79debe10dc5baabb44f65632c1c3b48",
+  "prompts": {},
+  "humans": {
+    "h_6b23b0021492af": {
+      "author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  }
+}

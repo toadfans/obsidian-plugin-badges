@@ -1,0 +1,35 @@
+test/core.test.ts
+  s_1c036b145c2928::t_ea3e6e18973eb4 161
+  s_1c036b145c2928::t_d66b65c835bb85 8,12,58-67,98-103,168,180,185,208,225,234-277
+src/cli.ts
+  s_1c036b145c2928::t_fc7eaeff83f15f 6-7,30,38,51
+action.yml
+  s_1c036b145c2928::t_2d7ec0d8a25004 3-5
+src/core.ts
+  s_1c036b145c2928::t_63e218cfae1907 19,34,60-81,109-112,124,129,134,138
+README.md
+  s_1c036b145c2928::t_8b08c29e44f175 6
+package.json
+  h_6b23b0021492af 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "2783386569b110b071229ab9a6e7373e3752aec6",
+  "prompts": {},
+  "humans": {
+    "h_6b23b0021492af": {
+      "author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_1c036b145c2928": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea54e-8b4b-7b40-8cf9-b2363b6ae448",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  }
+}

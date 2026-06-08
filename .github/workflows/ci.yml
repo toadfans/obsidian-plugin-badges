@@ -19,7 +19,7 @@ jobs:
   release:
     needs: check
     # Only on main (covers push-to-main and manual dispatch on main); never on PRs.
-    if: github.ref == 'refs/heads/main'
+    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: write

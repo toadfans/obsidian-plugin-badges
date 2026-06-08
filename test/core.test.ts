@@ -5,9 +5,11 @@ import { describe, expect, test } from "bun:test";
 
 import {
   buildBadges,
+  generateLicenseSvg,
   generateMinVersionSvg,
   generatePluginSvg,
   parseManifest,
+  parsePackageLicense,
   parsePluginPage,
 } from "../src/core.ts";
 import { run } from "../src/cli.ts";
@@ -53,6 +55,16 @@ describe("parseManifest", () => {
   });
 });
 
+describe("parsePackageLicense", () => {
+  test("reads package.json license", () => {
+    expect(parsePackageLicense(`{"license":"MIT"}`)).toBe("MIT");
+  });
+
+  test("rejects package.json without license", () => {
+    expect(() => parsePackageLicense(`{"name":"x"}`)).toThrow("license");
+  });
+});
+
 describe("parsePluginPage", () => {
   test("extracts details from SSR HTML", () => {
     expect(parsePluginPage(nameGuardPage)).toEqual({
@@ -81,6 +93,14 @@ describe("svg generation", () => {
     expect(svg).toContain("1.8.7+");
     expect(svg).toContain("#7C3AED");
     expect(Number(svg.match(/width="(\d+)"/)?.[1])).toBeLessThanOrEqual(210);
+  });
+
+  test("generates the license badge", () => {
+    const svg = generateLicenseSvg("MIT");
+
+    expect(svg).toContain("license");
+    expect(svg).toContain("MIT");
+    expect(svg).toContain("#007EC6");
   });
 
   test("generates one plugin badge with version, date, and downloads", () => {
@@ -138,13 +158,14 @@ describe("svg generation", () => {
 });
 
 describe("buildBadges", () => {
-  test("writes both SVG files into assets", async () => {
+  test("writes all SVG files into assets", async () => {
     const dir = await mkdtemp(join(tmpdir(), "badges-action-"));
     try {
       await writeFile(
         join(dir, "manifest.json"),
         `{"id":"name-guard","name":"NameGuard","version":"0.0.5","minAppVersion":"1.8.7"}`,
       );
+      await writeFile(join(dir, "package.json"), `{"license":"MIT"}`);
 
       const result = await buildBadges({
         sourceDir: dir,
@@ -156,10 +177,12 @@ describe("buildBadges", () => {
 
       expect(result).toEqual({
         assetsDir: join(dir, "assets"),
+        licensePath: join(dir, "assets", "license.svg"),
         minVersionPath: join(dir, "assets", "min-version.svg"),
         pluginPath: join(dir, "assets", "plugin.svg"),
         pluginSlug: "name-guard",
       });
+      expect(await readFile(result.licensePath, "utf8")).toContain("MIT");
       expect(await readFile(result.minVersionPath, "utf8")).toContain("1.8.7+");
       expect(await readFile(result.minVersionPath, "utf8")).toContain("Obsidian minimal version");
       expect(await readFile(result.pluginPath, "utf8")).toContain("NameGuard");
@@ -182,6 +205,7 @@ describe("run", () => {
         join(dir, "manifest.json"),
         `{"id":"name-guard","name":"NameGuard","version":"0.0.5","minAppVersion":"1.8.7"}`,
       );
+      await writeFile(join(dir, "package.json"), `{"license":"MIT"}`);
 
       const code = await run({
         env: {
@@ -198,10 +222,59 @@ describe("run", () => {
 
       expect(code).toBe(0);
       expect(commands).toEqual([]);
+      expect(await readFile(join(dir, "assets", "license.svg"), "utf8")).toContain("MIT");
       expect(await readFile(join(dir, "assets", "min-version.svg"), "utf8")).toContain("Obsidian minimal version");
       expect(await readFile(join(dir, "assets", "plugin.svg"), "utf8")).toContain("NameGuard");
       expect(await readFile(join(dir, "assets", "plugin.svg"), "utf8")).toContain("v0.0.5");
       expect(await readFile(join(dir, "assets", "plugin.svg"), "utf8")).toContain("99 score");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("tracks all badge files when committing", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "badges-action-"));
+    const commands: string[][] = [];
+
+    try {
+      await writeFile(
+        join(dir, "manifest.json"),
+        `{"id":"name-guard","name":"NameGuard","version":"0.0.5","minAppVersion":"1.8.7"}`,
+      );
+      await writeFile(join(dir, "package.json"), `{"license":"MIT"}`);
+
+      const code = await run({
+        env: {
+          INPUT_SOURCE_DIR: dir,
+        },
+        log: () => {},
+        exec: async (cmd, args) => {
+          commands.push([cmd, ...args]);
+          if (args[0] === "status") {
+            return " M assets/license.svg\n";
+          }
+          return "";
+        },
+        fetchPluginPage: async () => nameGuardPage,
+      });
+
+      expect(code).toBe(0);
+      expect(commands).toContainEqual([
+        "git",
+        "status",
+        "--short",
+        "--",
+        "assets/license.svg",
+        "assets/min-version.svg",
+        "assets/plugin.svg",
+      ]);
+      expect(commands).toContainEqual([
+        "git",
+        "add",
+        "assets/license.svg",
+        "assets/min-version.svg",
+        "assets/plugin.svg",
+      ]);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

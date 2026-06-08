@@ -3,6 +3,8 @@ import { buildBadges } from "./core.ts";
 
 type Env = Record<string, string | undefined>;
 
+const BADGE_FILES = ["assets/license.svg", "assets/min-version.svg", "assets/plugin.svg"];
+
 export type RunOptions = {
   env?: Env;
   log?: (text: string) => void;
@@ -25,6 +27,7 @@ export async function run(options: RunOptions = {}): Promise<number> {
       fetchPluginPage: options.fetchPluginPage,
     });
 
+    log(`wrote ${result.licensePath}`);
     log(`wrote ${result.minVersionPath}`);
     log(`wrote ${result.pluginPath}`);
 
@@ -32,11 +35,7 @@ export async function run(options: RunOptions = {}): Promise<number> {
       return 0;
     }
 
-    const status = await exec(
-      "git",
-      ["status", "--short", "--", "assets/min-version.svg", "assets/plugin.svg"],
-      sourceDir,
-    );
+    const status = await exec("git", ["status", "--short", "--", ...BADGE_FILES], sourceDir);
 
     if (!status.trim()) {
       log("no badge changes to commit");
@@ -49,7 +48,7 @@ export async function run(options: RunOptions = {}): Promise<number> {
       ["config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
       sourceDir,
     );
-    await exec("git", ["add", "assets/min-version.svg", "assets/plugin.svg"], sourceDir);
+    await exec("git", ["add", ...BADGE_FILES], sourceDir);
     await exec("git", ["commit", "-m", "chore: update Obsidian plugin badges"], sourceDir);
     await exec("git", ["push"], sourceDir);
 

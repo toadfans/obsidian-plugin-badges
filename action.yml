@@ -1,5 +1,8 @@
 name: Obsidian Plugin Badges
 description: Generate Obsidian plugin badge SVGs and commit them when changed.
+branding:
+  icon: tag
+  color: purple
 inputs:
   source-dir:
     description: Directory containing manifest.json.

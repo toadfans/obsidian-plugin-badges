@@ -16,6 +16,7 @@ export type PluginInfo = {
 
 export type BuildResult = {
   assetsDir: string;
+  licensePath: string;
   minVersionPath: string;
   pluginPath: string;
   pluginSlug: string;
@@ -30,6 +31,7 @@ export type BuildOptions = {
 const OBSIDIAN = "#7C3AED";
 const VERSION = "#2563EB";
 const DOWNLOADS = "#EA580C";
+const LICENSE = "#007EC6";
 const LABEL = "#555";
 const TEXT = "#fff";
 
@@ -53,6 +55,28 @@ export function parseManifest(text: string): ManifestInfo {
     name: readString(manifest, "name"),
     minAppVersion: readString(manifest, "minAppVersion"),
   };
+}
+
+export function parsePackageLicense(text: string): string {
+  let value: unknown;
+
+  try {
+    value = JSON.parse(text);
+  } catch (error) {
+    throw new Error(`package.json is not valid JSON: ${message(error)}`);
+  }
+
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("package.json must be an object");
+  }
+
+  const license = (value as Record<string, unknown>).license;
+
+  if (typeof license !== "string" || !license.trim()) {
+    throw new Error("package.json must contain a non-empty license");
+  }
+
+  return license.trim();
 }
 
 export function parsePluginPage(html: string): PluginInfo {
@@ -82,6 +106,10 @@ export function generateMinVersionSvg(minAppVersion: string): string {
   return badgeSvg("Obsidian minimal version", `${minAppVersion}+`, OBSIDIAN);
 }
 
+export function generateLicenseSvg(license: string): string {
+  return badgeSvg("license", license, LICENSE);
+}
+
 export function generatePluginSvg(pluginName: string, info: PluginInfo): string {
   return segmentedBadgeSvg(pluginName, [
     { text: `v${info.currentVersion}`, color: VERSION },
@@ -93,18 +121,21 @@ export function generatePluginSvg(pluginName: string, info: PluginInfo): string 
 
 export async function buildBadges(options: BuildOptions): Promise<BuildResult> {
   const manifest = parseManifest(await readFile(join(options.sourceDir, "manifest.json"), "utf8"));
+  const license = parsePackageLicense(await readFile(join(options.sourceDir, "package.json"), "utf8"));
   const pluginSlug = options.pluginSlug?.trim() || manifest.id;
   const fetchPluginPage = options.fetchPluginPage ?? fetchCommunityPluginPage;
   const pluginInfo = parsePluginPage(await fetchPluginPage(pluginSlug));
   const assetsDir = join(options.sourceDir, "assets");
+  const licensePath = join(assetsDir, "license.svg");
   const minVersionPath = join(assetsDir, "min-version.svg");
   const pluginPath = join(assetsDir, "plugin.svg");
 
   await mkdir(assetsDir, { recursive: true });
+  await writeFile(licensePath, `${generateLicenseSvg(license)}\n`);
   await writeFile(minVersionPath, `${generateMinVersionSvg(manifest.minAppVersion)}\n`);
   await writeFile(pluginPath, `${generatePluginSvg(manifest.name, pluginInfo)}\n`);
 
-  return { assetsDir, minVersionPath, pluginPath, pluginSlug };
+  return { assetsDir, licensePath, minVersionPath, pluginPath, pluginSlug };
 }
 
 async function fetchCommunityPluginPage(slug: string): Promise<string> {

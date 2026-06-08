@@ -104,6 +104,9 @@ async function checkPackage(): Promise<void> {
   if (pkg.scripts?.test !== "bun test") {
     failures.push("package.json test script must run bun test");
   }
+  if (!/^\d+\.\d+\.\d+$/.test(String((pkg as { version?: unknown }).version ?? ""))) {
+    failures.push("package.json version must be X.Y.Z");
+  }
 }
 
 async function checkAction(): Promise<void> {
@@ -125,7 +128,14 @@ async function checkAction(): Promise<void> {
 async function checkCi(): Promise<void> {
   const text = await readFile(join(root, ".github/workflows/ci.yml"), "utf8");
 
-  for (const needle of ["bun run lint", "bun test", "oven-sh/setup-bun"]) {
+  for (const needle of [
+    "bun run lint",
+    "bun test",
+    "oven-sh/setup-bun",
+    "package.json",
+    "softprops/action-gh-release@v3",
+    "tag_name: ${{ steps.version.outputs.tag }}",
+  ]) {
     if (!text.includes(needle)) {
       failures.push(`ci.yml missing ${needle}`);
     }

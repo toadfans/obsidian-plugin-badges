@@ -1,0 +1,29 @@
+name: Obsidian Plugin Badges
+description: Generate Obsidian plugin badge SVGs and commit them when changed.
+inputs:
+  source-dir:
+    description: Directory containing manifest.json.
+    required: false
+    default: "."
+  plugin-slug:
+    description: Obsidian Community plugin slug. Defaults to manifest.json id.
+    required: false
+    default: ""
+  commit:
+    description: Commit and push changed badge files.
+    required: false
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - name: Set up Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.3.14
+    - name: Generate badges
+      shell: bash
+      run: bun run "$GITHUB_ACTION_PATH/src/cli.ts"
+      env:
+        INPUT_SOURCE_DIR: ${{ inputs.source-dir }}
+        INPUT_PLUGIN_SLUG: ${{ inputs.plugin-slug }}
+        INPUT_COMMIT: ${{ inputs.commit }}

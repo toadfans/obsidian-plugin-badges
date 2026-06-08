@@ -1,0 +1,11 @@
+{
+  "name": "obsidian-plugin-badges-action",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/cli.ts",
+    "lint": "bun run scripts/lint.ts",
+    "test": "bun test",
+    "check": "bun run lint && bun test"
+  }
+}

@@ -18,7 +18,8 @@ jobs:
 
   release:
     needs: check
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name == 'main')
+    # Only on main (covers push-to-main and manual dispatch on main); never on PRs.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -26,31 +27,41 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: oven-sh/setup-bun@v2
 
-      - name: Get version from package.json
-        id: version
+      - name: Resolve version from package.json
+        id: v
         run: |
-          VERSION=$(bun -e "const p = await Bun.file('package.json').json(); console.log(p.version)")
-          TAG="v${VERSION}"
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          VERSION=$(jq -r .version package.json)
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "major=v${VERSION%%.*}" >> "$GITHUB_OUTPUT"
+          echo "minor=v$(echo "$VERSION" | cut -d. -f1-2)" >> "$GITHUB_OUTPUT"
           echo "Version from package.json: ${VERSION}"
 
-      - name: Create release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.version.outputs.tag }}
-          commit: ${{ github.sha }}
-          name: ${{ steps.version.outputs.tag }}
-          generateReleaseNotes: true
-          makeLatest: true
-          skipIfReleaseExists: true
+      - name: Skip if this version was already released
+        id: gate
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${{ steps.v.outputs.tag }}" >/dev/null 2>&1; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "Tag ${{ steps.v.outputs.tag }} already exists — nothing to release."
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "Tag ${{ steps.v.outputs.tag }} is new — releasing."
+          fi
 
-      - name: Update version tags
-        uses: cssnr/update-version-tags-action@v2
-        with:
-          tag: ${{ steps.version.outputs.tag }}
-          major: true
-          minor: true
-          force: true
+      - name: Create tag and GitHub Release
+        if: steps.gate.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.v.outputs.tag }}" \
+            --target "${{ github.sha }}" \
+            --title "${{ steps.v.outputs.tag }}" \
+            --generate-notes \
+            --latest
+
+      - name: Move floating major/minor tags
+        if: steps.gate.outputs.release == 'true'
+        run: |
+          git tag -f "${{ steps.v.outputs.major }}" "${{ github.sha }}"
+          git tag -f "${{ steps.v.outputs.minor }}" "${{ github.sha }}"
+          git push -f origin "${{ steps.v.outputs.major }}" "${{ steps.v.outputs.minor }}"

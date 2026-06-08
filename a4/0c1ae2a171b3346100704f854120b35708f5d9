@@ -1,0 +1,24 @@
+scripts/lint.ts
+  s_a90f3b6fd9c12f::t_2a7449e944e975 14,65-66,71-72,74,77,80-82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "a40c1ae2a171b3346100704f854120b35708f5d9",
+  "prompts": {},
+  "humans": {
+    "h_6b23b0021492af": {
+      "author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_a90f3b6fd9c12f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "daa6d569-7160-49fa-b831-0ce5ea95b034",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  }
+}

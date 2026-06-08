@@ -135,9 +135,17 @@ async function checkCi(): Promise<void> {
     "package.json",
     "softprops/action-gh-release@v3",
     "tag_name: ${{ steps.version.outputs.tag }}",
+    "cssnr/update-version-tags-action@v2",
+    "tag: ${{ steps.version.outputs.tag }}",
+    "force: true",
+    "minor: false",
   ]) {
     if (!text.includes(needle)) {
       failures.push(`ci.yml missing ${needle}`);
     }
+  }
+
+  if (/git\s+tag\s+-f|git\s+tag\s+-fa|git\s+push\s+-f/.test(text)) {
+    failures.push("ci.yml must use a version tag action instead of hand-written force tag commands");
   }
 }

@@ -33,10 +33,8 @@ jobs:
         run: |
           VERSION=$(bun -e "const p = await Bun.file('package.json').json(); console.log(p.version)")
           TAG="v${VERSION}"
-          MAJOR_TAG="v${VERSION%%.*}"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "major_tag=${MAJOR_TAG}" >> "$GITHUB_OUTPUT"
           echo "Version from package.json: ${VERSION}"
 
       - name: Check if release exists
@@ -51,28 +49,23 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Prepare tags
-        if: steps.release.outputs.exists == 'false'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          if ! git rev-parse "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
-            git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
-            git push origin "${{ steps.version.outputs.tag }}"
-          fi
-
-          git tag -fa "${{ steps.version.outputs.major_tag }}" -m "Update ${{ steps.version.outputs.major_tag }} to ${{ steps.version.outputs.tag }}" "${{ steps.version.outputs.tag }}"
-          git push -f origin "${{ steps.version.outputs.major_tag }}"
-
       - name: Create release
         if: steps.release.outputs.exists == 'false'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           name: Release ${{ steps.version.outputs.tag }}
           draft: false
           prerelease: false
           body: Release ${{ steps.version.outputs.tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update major version tag
+        uses: cssnr/update-version-tags-action@v2
+        with:
+          tag: ${{ steps.version.outputs.tag }}
+          major: true
+          minor: false
+          force: true

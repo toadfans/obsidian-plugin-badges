@@ -1,0 +1,30 @@
+scripts/lint.ts
+  s_1c036b145c2928::t_51a1833c364874 138-141,148-149
+  s_1c036b145c2928::t_6eea106b9eb6f8 147,150
+package.json
+  h_6b23b0021492af 3
+.github/workflows/ci.yml
+  s_1c036b145c2928::t_b4595e0c8d8e45 64-71
+  s_1c036b145c2928::t_f6d20d2efcdee9 57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "9a94d3e2659b6ef3e0db2641b998093a464fdc61",
+  "prompts": {},
+  "humans": {
+    "h_6b23b0021492af": {
+      "author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_1c036b145c2928": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea54e-8b4b-7b40-8cf9-b2363b6ae448",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  }
+}

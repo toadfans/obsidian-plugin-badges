@@ -20,11 +20,20 @@ runs:
   using: composite
   steps:
     - name: Set up Bun
+      if: ${{ github.event.repository.private == false }}
       uses: oven-sh/setup-bun@v2
+    - name: Checkout wiki
+      if: ${{ github.event.repository.private == false }}
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ github.repository }}.wiki
+        path: .obsidian-plugin-badges-wiki
     - name: Generate badges
+      if: ${{ github.event.repository.private == false }}
       shell: bash
       run: bun run "$GITHUB_ACTION_PATH/src/cli.ts"
       env:
         INPUT_SOURCE_DIR: ${{ inputs.source-dir }}
+        INPUT_OUTPUT_DIR: ${{ github.workspace }}/.obsidian-plugin-badges-wiki
         INPUT_PLUGIN_SLUG: ${{ inputs.plugin-slug }}
         INPUT_COMMIT: ${{ inputs.commit }}

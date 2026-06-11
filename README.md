@@ -1,12 +1,12 @@
 # Obsidian Plugin Badges Action
 
-Generate badge SVG files for an Obsidian community plugin repository.
+Generate badge SVG files for an Obsidian community plugin repository wiki.
 
 - `assets/min-version.svg`: reads `minAppVersion` from `manifest.json`
 - `assets/license.svg`: reads `license` from `package.json`
 - `assets/plugin.svg`: reads the plugin page `Current version`, `Last updated`, `Downloads`, and Scorecard score from Obsidian Community
 
-The action commits and pushes changed badge files by default.
+The action runs only for public repositories. It writes changed badge files to the repository wiki, so the source repository history stays clean.
 
 ## Usage
 
@@ -31,6 +31,8 @@ jobs:
       - uses: toadfans/obsidian-plugin-badges-action@v1
 ```
 
+The repository must have Wiki enabled and initialized. `contents: write` lets `GITHUB_TOKEN` push to `${{ github.repository }}.wiki`.
+
 If the Obsidian Community URL slug differs from `manifest.json` `id`:
 
 ```yaml
@@ -53,7 +55,7 @@ To generate files without committing them:
 | --- | --- | --- |
 | `source-dir` | `.` | Directory containing `manifest.json` |
 | `plugin-slug` | `manifest.json` `id` | Obsidian Community plugin slug |
-| `commit` | `true` | Commit and push changed badge files |
+| `commit` | `true` | Commit and push changed badge files to the wiki repository |
 
 ## Local Checks
 

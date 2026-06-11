@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, test } from "bun:test";
@@ -193,6 +193,32 @@ describe("buildBadges", () => {
       await rm(dir, { recursive: true, force: true });
     }
   });
+
+  test("reads plugin metadata from sourceDir and writes badges into outputDir", async () => {
+    const sourceDir = await mkdtemp(join(tmpdir(), "badges-action-source-"));
+    const outputDir = await mkdtemp(join(tmpdir(), "badges-action-output-"));
+
+    try {
+      await writeFile(
+        join(sourceDir, "manifest.json"),
+        `{"id":"name-guard","name":"NameGuard","version":"0.0.5","minAppVersion":"1.8.7"}`,
+      );
+      await writeFile(join(sourceDir, "package.json"), `{"license":"MIT"}`);
+
+      const result = await buildBadges({
+        sourceDir,
+        outputDir,
+        fetchPluginPage: async () => nameGuardPage,
+      });
+
+      expect(result.assetsDir).toBe(join(outputDir, "assets"));
+      expect(await readFile(join(outputDir, "assets", "license.svg"), "utf8")).toContain("MIT");
+      expect(stat(join(sourceDir, "assets"))).rejects.toThrow();
+    } finally {
+      await rm(sourceDir, { recursive: true, force: true });
+      await rm(outputDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("run", () => {
@@ -277,6 +303,47 @@ describe("run", () => {
       ]);
     } finally {
       await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("commits badge changes from outputDir instead of sourceDir", async () => {
+    const sourceDir = await mkdtemp(join(tmpdir(), "badges-action-source-"));
+    const outputDir = await mkdtemp(join(tmpdir(), "badges-action-output-"));
+    const commands: string[][] = [];
+    const cwds: string[] = [];
+
+    try {
+      await writeFile(
+        join(sourceDir, "manifest.json"),
+        `{"id":"name-guard","name":"NameGuard","version":"0.0.5","minAppVersion":"1.8.7"}`,
+      );
+      await writeFile(join(sourceDir, "package.json"), `{"license":"MIT"}`);
+
+      const code = await run({
+        env: {
+          INPUT_SOURCE_DIR: sourceDir,
+          INPUT_OUTPUT_DIR: outputDir,
+        },
+        log: () => {},
+        exec: async (cmd, args, cwd) => {
+          commands.push([cmd, ...args]);
+          cwds.push(cwd);
+          if (args[0] === "status") {
+            return " M assets/license.svg\n";
+          }
+          return "";
+        },
+        fetchPluginPage: async () => nameGuardPage,
+      });
+
+      expect(code).toBe(0);
+      expect(cwds.every((cwd) => cwd === outputDir)).toBe(true);
+      expect(commands).toContainEqual(["git", "push"]);
+      expect(await readFile(join(outputDir, "assets", "plugin.svg"), "utf8")).toContain("NameGuard");
+      expect(stat(join(sourceDir, "assets"))).rejects.toThrow();
+    } finally {
+      await rm(sourceDir, { recursive: true, force: true });
+      await rm(outputDir, { recursive: true, force: true });
     }
   });
 });

@@ -24,6 +24,7 @@ export type BuildResult = {
 
 export type BuildOptions = {
   sourceDir: string;
+  outputDir?: string;
   pluginSlug?: string;
   fetchPluginPage?: (slug: string) => Promise<string>;
 };
@@ -125,7 +126,7 @@ export async function buildBadges(options: BuildOptions): Promise<BuildResult> {
   const pluginSlug = options.pluginSlug?.trim() || manifest.id;
   const fetchPluginPage = options.fetchPluginPage ?? fetchCommunityPluginPage;
   const pluginInfo = parsePluginPage(await fetchPluginPage(pluginSlug));
-  const assetsDir = join(options.sourceDir, "assets");
+  const assetsDir = join(options.outputDir ?? options.sourceDir, "assets");
   const licensePath = join(assetsDir, "license.svg");
   const minVersionPath = join(assetsDir, "min-version.svg");
   const pluginPath = join(assetsDir, "plugin.svg");

@@ -17,12 +17,14 @@ export async function run(options: RunOptions = {}): Promise<number> {
   const log = options.log ?? console.log;
   const exec = options.exec ?? execCommand;
   const sourceDir = resolve(input(env, "SOURCE_DIR") || ".");
+  const outputDir = resolve(input(env, "OUTPUT_DIR") || sourceDir);
   const pluginSlug = input(env, "PLUGIN_SLUG");
   const shouldCommit = input(env, "COMMIT").toLowerCase() !== "false";
 
   try {
     const result = await buildBadges({
       sourceDir,
+      outputDir,
       pluginSlug,
       fetchPluginPage: options.fetchPluginPage,
     });
@@ -35,22 +37,22 @@ export async function run(options: RunOptions = {}): Promise<number> {
       return 0;
     }
 
-    const status = await exec("git", ["status", "--short", "--", ...BADGE_FILES], sourceDir);
+    const status = await exec("git", ["status", "--short", "--", ...BADGE_FILES], outputDir);
 
     if (!status.trim()) {
       log("no badge changes to commit");
       return 0;
     }
 
-    await exec("git", ["config", "user.name", "github-actions[bot]"], sourceDir);
+    await exec("git", ["config", "user.name", "github-actions[bot]"], outputDir);
     await exec(
       "git",
       ["config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
-      sourceDir,
+      outputDir,
     );
-    await exec("git", ["add", ...BADGE_FILES], sourceDir);
-    await exec("git", ["commit", "-m", "chore: update Obsidian plugin badges"], sourceDir);
-    await exec("git", ["push"], sourceDir);
+    await exec("git", ["add", ...BADGE_FILES], outputDir);
+    await exec("git", ["commit", "-m", "chore: update Obsidian plugin badges"], outputDir);
+    await exec("git", ["push"], outputDir);
 
     return 0;
   } catch (error) {

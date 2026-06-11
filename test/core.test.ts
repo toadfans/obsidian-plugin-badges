@@ -311,6 +311,7 @@ describe("run", () => {
     const outputDir = await mkdtemp(join(tmpdir(), "badges-action-output-"));
     const commands: string[][] = [];
     const cwds: string[] = [];
+    const logs: string[] = [];
 
     try {
       await writeFile(
@@ -324,7 +325,7 @@ describe("run", () => {
           INPUT_SOURCE_DIR: sourceDir,
           INPUT_OUTPUT_DIR: outputDir,
         },
-        log: () => {},
+        log: (text) => logs.push(text),
         exec: async (cmd, args, cwd) => {
           commands.push([cmd, ...args]);
           cwds.push(cwd);
@@ -339,6 +340,7 @@ describe("run", () => {
       expect(code).toBe(0);
       expect(cwds.every((cwd) => cwd === outputDir)).toBe(true);
       expect(commands).toContainEqual(["git", "push"]);
+      expect(logs).toContain("committed and pushed badge changes");
       expect(await readFile(join(outputDir, "assets", "plugin.svg"), "utf8")).toContain("NameGuard");
       expect(stat(join(sourceDir, "assets"))).rejects.toThrow();
     } finally {

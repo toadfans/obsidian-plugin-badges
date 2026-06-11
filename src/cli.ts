@@ -53,6 +53,7 @@ export async function run(options: RunOptions = {}): Promise<number> {
     await exec("git", ["add", ...BADGE_FILES], outputDir);
     await exec("git", ["commit", "-m", "chore: update Obsidian plugin badges"], outputDir);
     await exec("git", ["push"], outputDir);
+    log("committed and pushed badge changes");
 
     return 0;
   } catch (error) {

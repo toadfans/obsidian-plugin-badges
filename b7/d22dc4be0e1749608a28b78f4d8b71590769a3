@@ -1,0 +1,26 @@
+test/core.test.ts
+  s_02429b1eed3c4e::t_751b94afde3038 314,328,343
+src/cli.ts
+  s_02429b1eed3c4e::t_41ed7cc5573e84 56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b7d22dc4be0e1749608a28b78f4d8b71590769a3",
+  "prompts": {},
+  "humans": {
+    "h_6b23b0021492af": {
+      "author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_02429b1eed3c4e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019eb492-9be7-74f0-9132-6c46de9a6b3c",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  }
+}

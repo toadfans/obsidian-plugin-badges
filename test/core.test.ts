@@ -16,7 +16,8 @@ import { run } from "../src/cli.ts";
 
 const nameGuardPage = String.raw`
 <a href="#scorecard" class="block w-full no-underline text-normal hover:text-white">
-  <div class="text-3xl font-bold tabular-nums">99<!-- -->%</div>
+  <div>Health</div><div>Excellent</div>
+  <div>Review</div><div>Passed</div>
 </a>
 <div class="w-full text-sm grid grid-cols-2 gap-2">
   <div class="text-muted">Current version</div>
@@ -28,7 +29,7 @@ const nameGuardPage = String.raw`
 </div>`;
 
 const dataviewPage = String.raw`
-<script>self.__next_f.push([1,"[[\"$\",\"div\",null,{\"className\":\"text-3xl font-bold tabular-nums\",\"children\":[95,\"%\"]}],[[\"$\",\"div\",null,{\"className\":\"text-muted\",\"children\":\"Current version\"}],[\"$\",\"div\",null,{\"className\":\"\",\"children\":\"0.5.68\"}],[\"$\",\"div\",null,{\"className\":\"text-muted\",\"children\":\"Last updated\"}],[\"$\",\"div\",null,{\"title\":\"Apr 7, 2025\",\"children\":\"Last year\"}],[[\"$\",\"div\",null,{\"className\":\"text-muted\",\"children\":\"Downloads\"}],[\"$\",\"div\",null,{\"className\":\"\",\"children\":\"4.3M\"}]]]"])</script>`;
+<script>self.__next_f.push([1,"[[\"$\",\"div\",null,{\"children\":\"Health\"}],[\"$\",\"div\",null,{\"children\":\"Excellent\"}],[\"$\",\"div\",null,{\"children\":\"Review\"}],[\"$\",\"div\",null,{\"children\":\"Passed\"}]],[[\"$\",\"div\",null,{\"className\":\"text-muted\",\"children\":\"Current version\"}],[\"$\",\"div\",null,{\"className\":\"\",\"children\":\"0.5.68\"}],[\"$\",\"div\",null,{\"className\":\"text-muted\",\"children\":\"Last updated\"}],[\"$\",\"div\",null,{\"title\":\"Apr 7, 2025\",\"children\":\"Last year\"}],[[\"$\",\"div\",null,{\"className\":\"text-muted\",\"children\":\"Downloads\"}],[\"$\",\"div\",null,{\"className\":\"\",\"children\":\"4.3M\"}]]]"])</script>`;
 
 describe("parseManifest", () => {
   test("reads required Obsidian plugin fields", () => {
@@ -71,7 +72,8 @@ describe("parsePluginPage", () => {
       currentVersion: "0.0.5",
       lastUpdated: "Jun 8, 2026",
       downloads: "3",
-      score: 99,
+      health: "Excellent",
+      review: "Passed",
     });
   });
 
@@ -80,7 +82,8 @@ describe("parsePluginPage", () => {
       currentVersion: "0.5.68",
       lastUpdated: "Apr 7, 2025",
       downloads: "4.3M",
-      score: 95,
+      health: "Excellent",
+      review: "Passed",
     });
   });
 });
@@ -108,7 +111,8 @@ describe("svg generation", () => {
       currentVersion: "0.0.5",
       lastUpdated: "Jun 8, 2026",
       downloads: "3",
-      score: 99,
+      health: "Excellent",
+      review: "Passed",
     });
 
     expect(svg).toContain("NameGuard");
@@ -116,7 +120,8 @@ describe("svg generation", () => {
     expect(svg).toContain("v0.0.5");
     expect(svg).toContain("Jun 8, 2026");
     expect(svg).toContain("3 downloads");
-    expect(svg).toContain("99 score");
+    expect(svg).toContain("Excellent health");
+    expect(svg).toContain("Passed review");
     expect(svg).toContain('fill="#2563EB"');
     expect(svg).toContain('fill="#7C3AED"');
     expect(svg).toContain('fill="#EA580C"');
@@ -128,7 +133,8 @@ describe("svg generation", () => {
       currentVersion: `1<2`,
       lastUpdated: `A&B`,
       downloads: `"7"`,
-      score: 99,
+      health: "Excellent",
+      review: "Passed",
     });
 
     expect(svg).toContain("Name&amp;Guard");
@@ -137,13 +143,14 @@ describe("svg generation", () => {
     expect(svg).toContain("&quot;7&quot; downloads");
   });
 
-  test("uses score color thresholds", () => {
+  test("uses scorecard status colors", () => {
     expect(
       generatePluginSvg("NameGuard", {
         currentVersion: "0.0.5",
         lastUpdated: "Jun 8, 2026",
         downloads: "3",
-        score: 81,
+        health: "Excellent",
+        review: "Passed",
       }),
     ).toContain('fill="#16A34A"');
     expect(
@@ -151,9 +158,10 @@ describe("svg generation", () => {
         currentVersion: "0.0.5",
         lastUpdated: "Jun 8, 2026",
         downloads: "3",
-        score: 80,
+        health: "Good",
+        review: "Queued",
       }),
-    ).toContain('fill="#CA8A04"');
+    ).toContain('fill="#737373"');
   });
 });
 
@@ -188,7 +196,7 @@ describe("buildBadges", () => {
       expect(await readFile(result.pluginPath, "utf8")).toContain("NameGuard");
       expect(await readFile(result.pluginPath, "utf8")).not.toContain("Plugin:");
       expect(await readFile(result.pluginPath, "utf8")).toContain("v0.0.5");
-      expect(await readFile(result.pluginPath, "utf8")).toContain("99 score");
+      expect(await readFile(result.pluginPath, "utf8")).toContain("Excellent health");
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -252,7 +260,7 @@ describe("run", () => {
       expect(await readFile(join(dir, "assets", "min-version.svg"), "utf8")).toContain("Obsidian minimal version");
       expect(await readFile(join(dir, "assets", "plugin.svg"), "utf8")).toContain("NameGuard");
       expect(await readFile(join(dir, "assets", "plugin.svg"), "utf8")).toContain("v0.0.5");
-      expect(await readFile(join(dir, "assets", "plugin.svg"), "utf8")).toContain("99 score");
+      expect(await readFile(join(dir, "assets", "plugin.svg"), "utf8")).toContain("Excellent health");
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

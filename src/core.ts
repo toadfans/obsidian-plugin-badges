@@ -11,7 +11,8 @@ export type PluginInfo = {
   currentVersion: string;
   lastUpdated: string;
   downloads: string;
-  score: number;
+  health: string;
+  review: string;
 };
 
 export type BuildResult = {
@@ -85,7 +86,7 @@ export function parsePluginPage(html: string): PluginInfo {
   const currentVersion = ssr.currentVersion ?? readFlightValue(html, "Current version");
   const lastUpdated = ssr.lastUpdated ?? readFlightTitle(html, "Last updated");
   const downloads = ssr.downloads ?? readFlightValue(html, "Downloads");
-  const score = ssr.score ?? readFlightScore(html);
+  const scorecard = ssr.health && ssr.review ? ssr : readFlightScorecard(html);
 
   if (!currentVersion) {
     throw new Error("Could not find Current version on plugin page");
@@ -96,11 +97,11 @@ export function parsePluginPage(html: string): PluginInfo {
   if (!downloads) {
     throw new Error("Could not find Downloads on plugin page");
   }
-  if (score === undefined) {
-    throw new Error("Could not find Score on plugin page");
+  if (!scorecard.health || !scorecard.review) {
+    throw new Error("Could not find Scorecard Health/Review on plugin page");
   }
 
-  return { currentVersion, lastUpdated, downloads, score };
+  return { currentVersion, lastUpdated, downloads, health: scorecard.health, review: scorecard.review };
 }
 
 export function generateMinVersionSvg(minAppVersion: string): string {
@@ -116,7 +117,8 @@ export function generatePluginSvg(pluginName: string, info: PluginInfo): string 
     { text: `v${info.currentVersion}`, color: VERSION },
     { text: info.lastUpdated, color: OBSIDIAN },
     { text: `${info.downloads} downloads`, color: DOWNLOADS },
-    { text: `${info.score} score`, color: scoreColor(info.score) },
+    { text: `${info.health} health`, color: scorecardColor(info.health) },
+    { text: `${info.review} review`, color: scorecardColor(info.review) },
   ]);
 }
 
@@ -154,7 +156,7 @@ function parseSsrDetails(html: string): Partial<PluginInfo> {
     currentVersion: readSsrValue(html, "Current version"),
     lastUpdated: readSsrValue(html, "Last updated", true),
     downloads: readSsrValue(html, "Downloads"),
-    score: readSsrScore(html),
+    ...readSsrScorecard(html),
   };
 }
 
@@ -207,18 +209,23 @@ function readFlightTitle(html: string, label: string): string | undefined {
   return title?.[1] ? decodeJsonText(title[1]).trim() : undefined;
 }
 
-function readSsrScore(html: string): number | undefined {
+function readSsrScorecard(html: string): Pick<PluginInfo, "health" | "review"> {
   const source = html.replace(/<script[\s\S]*?<\/script>/gi, "");
-  const match = source.match(/class="[^"]*\btext-3xl\b[^"]*\btabular-nums\b[^"]*"[^>]*>\s*(\d+)\s*(?:<!--\s*-->)?\s*%/);
+  const match = source.match(
+    /<div\b[^>]*>\s*Health\s*<\/div>\s*<div\b[^>]*>([\s\S]*?)<\/div>\s*<div\b[^>]*>\s*Review\s*<\/div>\s*<div\b[^>]*>([\s\S]*?)<\/div>/i,
+  );
 
-  return match?.[1] ? Number(match[1]) : undefined;
+  return {
+    health: textFromHtml(match?.[1]) ?? "",
+    review: textFromHtml(match?.[2]) ?? "",
+  };
 }
 
-function readFlightScore(html: string): number | undefined {
-  const flight = decodeFlight(html);
-  const match = flight.match(/"className":"[^"]*\btext-3xl\b[^"]*\btabular-nums\b[^"]*"[^}]*"children":\[(\d+),"%"\]/);
-
-  return match?.[1] ? Number(match[1]) : undefined;
+function readFlightScorecard(html: string): Pick<PluginInfo, "health" | "review"> {
+  return {
+    health: readFlightValue(html, "Health") ?? "",
+    review: readFlightValue(html, "Review") ?? "",
+  };
 }
 
 function badgeSvg(label: string, value: string, color: string): string {
@@ -298,14 +305,15 @@ function shadowedText(x: number, text: string): string {
   ].join("");
 }
 
-function scoreColor(score: number): string {
-  if (score > 80) {
+function scorecardColor(value: string): string {
+  const text = value.toLowerCase();
+  if (text === "excellent" || text === "passed") {
     return "#16A34A";
   }
-  if (score >= 60) {
-    return "#CA8A04";
+  if (text === "failed" || text === "rejected") {
+    return "#DC2626";
   }
-  return "#DC2626";
+  return "#737373";
 }
 
 function textWidth(text: string): number {

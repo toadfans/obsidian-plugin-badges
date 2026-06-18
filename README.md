@@ -4,7 +4,7 @@ Generate badge SVG files for an Obsidian community plugin repository wiki.
 
 - `assets/min-version.svg`: reads `minAppVersion` from `manifest.json`
 - `assets/license.svg`: reads `license` from `package.json`
-- `assets/plugin.svg`: reads the plugin page `Current version`, `Last updated`, `Downloads`, and Scorecard score from Obsidian Community
+- `assets/plugin.svg`: reads the plugin page `Current version`, `Last updated`, `Downloads`, and Scorecard `Health`/`Review` from Obsidian Community
 
 The action runs only for public repositories. It writes changed badge files to the repository wiki, so the source repository history stays clean.
 

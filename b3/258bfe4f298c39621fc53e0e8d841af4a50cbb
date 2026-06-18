@@ -1,0 +1,28 @@
+README.md
+  s_9f474d8d666e7d::t_74ae6b5e3f2862 7
+test/core.test.ts
+  s_9f474d8d666e7d::t_f067637cd082cc 19-20,32,75-76,85-86,114-115,123-124,136-137,146,152-153,161-162,164,199,263
+src/core.ts
+  s_9f474d8d666e7d::t_e8ecb2f18867bb 14-15,89,100-101,104,120-121,159,212,214-216,218-221,224-228,308-310,313-314,316
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "b3258bfe4f298c39621fc53e0e8d841af4a50cbb",
+  "prompts": {},
+  "humans": {
+    "h_6b23b0021492af": {
+      "author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_9f474d8d666e7d": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ed8e4-92cc-7c42-8064-9da6b437abc0",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Yuhang Shi <toadfanszz@gmail.com>"
+    }
+  }
+}
